@@ -2,9 +2,7 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
-	"strings"
 )
 
 func tasksGet(w http.ResponseWriter, r *http.Request, tasks *[]Task) {
@@ -14,17 +12,19 @@ func tasksGet(w http.ResponseWriter, r *http.Request, tasks *[]Task) {
 	   Метод GET для API задач.
 	   Вернет JSON задач с пагинацией. */
 
-	taskStrings := make([]string, 0)
-	for _, task := range *tasks {
-		taskStrings = append(taskStrings, task.JSON())
+	response := struct {
+		Count   int    `json:"count"`
+		Results []Task `json:"results"`
+	}{
+		len(*tasks),
+		*tasks,
 	}
-	tasksJSON := strings.Join(taskStrings, ", ")
-	res := fmt.Sprintf("{\"count\": %d, \"results\": [%s]}", len(*tasks), tasksJSON)
+
 	w.Header().Add("Content-Type", "application/json")
-	_, err := w.Write([]byte(res))
-	if err != nil {
-		http.Error(w, "Error writing http response", http.StatusBadRequest)
-		panic(err)
+
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		http.Error(w, "Error encoding JSON response", http.StatusInternalServerError)
+		return
 	}
 }
 
@@ -48,14 +48,15 @@ func tasksPost(w http.ResponseWriter, r *http.Request, mgr *TasksMgr) {
 	   Принимает тело JSON с параметром "name". */
 	data, err := getTaskPostData(w, r)
 	if err != nil {
+		http.Error(w, "Error parsing JSON", http.StatusBadRequest)
 		return
 	}
 	appendTask(mgr, data.Name)
 	w.WriteHeader(http.StatusCreated)
 	_, err = w.Write([]byte("201 Created"))
 	if err != nil {
-		http.Error(w, "Error writing http response", http.StatusBadRequest)
-		panic(err)
+		http.Error(w, "Error writing http response", http.StatusInternalServerError)
+		return
 	}
 }
 
@@ -64,7 +65,8 @@ func methodNotSupported(w http.ResponseWriter, r *http.Request) {
 	   Функция для записи в ответ информации о недоступности метода запроса. */
 	_, err := w.Write([]byte("Method " + r.Method + " is not allowed"))
 	if err != nil {
-		panic(err)
+		http.Error(w, "Error writing http response", http.StatusInternalServerError)
+		return
 	}
 }
 

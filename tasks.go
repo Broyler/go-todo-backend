@@ -1,7 +1,6 @@
 package main
 
 import (
-    "fmt"
     "time"
 )
 
@@ -11,10 +10,11 @@ type Task struct {
 
        Структура для хранения данных о задачах.
        Если поле DoneAt нулевое, значит задача не выполнена */
-    ID        int
-    Name      string
-    DoneAt    time.Time
-    CreatedAt time.Time
+    ID        int        `json:"id"`
+    Name      string     `json:"name"`
+    Done      bool       `json:"done"`
+    DoneAt    *time.Time `json:"done_at,omitempty"`
+    CreatedAt time.Time  `json:"created_at"`
 }
 
 type TaskPost struct {
@@ -30,14 +30,13 @@ type TasksMgr struct {
     Count int
 }
 
-func (t *Task) Done() {
-    /* Since Task.DoneAt is the only status property,
-       we only need to update it to mark a task as done.
-
-       Так как Task.DoneAt это единственное поле
-       статуса задачи, нужно обновить только его, чтобы
-       задача считалась выполненной. */
-    t.DoneAt = time.Now()
+func (t *Task) MarkDone() {
+    /* Update Task.DoneAt and Task.Done
+       Обновить Task.DoneAt и Task.Done */
+    loc, _ := time.LoadLocation("UTC")
+    now := time.Now().In(loc)
+    t.DoneAt = &now
+    t.Done = true
 }
 
 func (t *Task) Toggle() {
@@ -51,17 +50,18 @@ func (t *Task) Toggle() {
        задача не считается сделанной пока его DoneAt нулевое.
        Выключение задачи устанавливает DoneAt к нулю. */
 
-    if t.DoneAt.IsZero() {
-        t.Done()
+    if t.DoneAt == nil {
+        t.MarkDone()
     } else {
-        t.DoneAt = time.Time{}
+        t.DoneAt = nil
+        t.Done = false
     }
 }
 
-func (t *Task) JSON() string {
-    res := fmt.Sprintf("{\"id\": %d, \"name\": \"%s\"}", (*t).ID, (*t).Name)
-    return res
-}
+//
+//func (t *Task) JSON() ([]byte, error) {
+//	return json.Marshal(t)
+//}
 
 func appendTask(mgr *TasksMgr, name string) {
     /* Adds a new task to in-memory tasks slice.
@@ -84,6 +84,7 @@ func appendTask(mgr *TasksMgr, name string) {
         ID:        (*mgr).Count,
         Name:      name,
         CreatedAt: timestamp,
+        Done:      false,
     }
     *(*mgr).Tasks = append(*(*mgr).Tasks, task)
 }
