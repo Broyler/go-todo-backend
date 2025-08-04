@@ -1,6 +1,9 @@
 package main
 
-import "time"
+import (
+    "fmt"
+    "time"
+)
 
 type Task struct {
     /* A struct for storing tasks data.
@@ -55,15 +58,22 @@ func (t *Task) Toggle() {
     }
 }
 
+func (t *Task) JSON() string {
+    res := fmt.Sprintf("{\"id\": %d, \"name\": \"%s\"}", (*t).ID, (*t).Name)
+    return res
+}
+
 func appendTask(mgr *TasksMgr, name string) {
     /* Adds a new task to in-memory tasks slice.
        Sets the CreatedAt property at UTC timestamp.
+       Increments the task manager count.
        Args:
          mgr *TasksMgr - a pointer to the task manager
          name   string  - a name for the new task
 
        Добавляет новую задачу в слайс задач в памяти.
        Устанавливает поле CreatedAt к текущему времени UTC.
+       Увеличивает счетчик менеджера задач.
        Аргументы:
          mgr *TasksMgr - указатель к менеджеру задач
          name   string  - имя новой задачи */

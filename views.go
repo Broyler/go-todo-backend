@@ -2,17 +2,26 @@ package main
 
 import (
 	"encoding/json"
-	"log"
+	"fmt"
 	"net/http"
+	"strings"
 )
 
-func tasksGet(w http.ResponseWriter, r *http.Request) {
+func tasksGet(w http.ResponseWriter, r *http.Request, tasks *[]Task) {
 	/* GET method for tasks API.
 	   Will return a paginated JSON response with tasks.
 
 	   Метод GET для API задач.
 	   Вернет JSON задач с пагинацией. */
-	_, err := w.Write([]byte("Get method called"))
+
+	taskStrings := make([]string, 0)
+	for _, task := range *tasks {
+		taskStrings = append(taskStrings, task.JSON())
+	}
+	tasksJSON := strings.Join(taskStrings, ", ")
+	res := fmt.Sprintf("{\"count\": %d, \"results\": [%s]}", len(*tasks), tasksJSON)
+	w.Header().Add("Content-Type", "application/json")
+	_, err := w.Write([]byte(res))
 	if err != nil {
 		http.Error(w, "Error writing http response", http.StatusBadRequest)
 		panic(err)
@@ -64,8 +73,7 @@ func tasksAPI(w http.ResponseWriter, r *http.Request, mgr *TasksMgr) {
 	   Функция для выбора между методами запросов для API задач. */
 	switch r.Method {
 	case http.MethodGet:
-		log.Printf("Count - %d", len(*(*mgr).Tasks))
-		tasksGet(w, r)
+		tasksGet(w, r, (*mgr).Tasks)
 	case http.MethodPost:
 		tasksPost(w, r, mgr)
 	default:
