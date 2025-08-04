@@ -1,0 +1,5 @@
+### GET request to tasks API root
+GET localhost:8000/api/tasks
+
+### DELETE request to tasks API root
+DELETE localhost:8000/api/tasks
