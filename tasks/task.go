@@ -7,21 +7,11 @@ import (
 
 type Task struct {
 	/* A struct for storing tasks data.
-	   If DoneAt is zero, task is not completed.
-
-	   Структура для хранения данных о задачах.
-	   Если поле DoneAt нулевое, значит задача не выполнена */
-	ID        int        `json:"id"`
-	Name      string     `json:"name"`
-	Done      bool       `json:"done"`
-	DoneAt    *time.Time `json:"done_at,omitempty"`
-	CreatedAt time.Time  `json:"created_at"`
-}
-
-type TaskPost struct {
-	// A struct for getting POST request data from tasks API
-	// Структура для получения данных POST запроса из API задач
-	Name string `json:"name"`
+	   Структура для хранения данных о задачах. */
+	ID        int       `json:"id"`
+	Name      string    `json:"name"`
+	Done      bool      `json:"done"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 type TaskMgr struct {
@@ -32,42 +22,19 @@ type TaskMgr struct {
 	sync.RWMutex
 }
 
-func (t *Task) MarkDone() {
-	/* Update Task.DoneAt and Task.Done
-	   Обновить Task.DoneAt и Task.Done */
-	now := time.Now()
-	t.DoneAt = &now
-	t.Done = true
+func (m *TaskMgr) AddTaskByName(name string) Task {
+	return m.AddTask(Task{Name: name})
 }
 
-func (t *Task) Toggle() {
-	/* A method to toggle task.
-	   Since Task.DoneAt is a Time object, not a boolean
-	   a Task is not done if its DoneAt is zero.
-	   Un-checking a task is setting DoneAt to zero.
-
-	   Метод для переключения состояния задачи
-	   Так как Task.DoneAt это объект Time, не булевой,
-	   задача не считается сделанной пока его DoneAt нулевое.
-	   Выключение задачи устанавливает DoneAt к нулю. */
-
-	if t.DoneAt == nil {
-		t.MarkDone()
-	} else {
-		t.DoneAt = nil
-		t.Done = false
-	}
-}
-
-func (m *TaskMgr) AddTask(name string) Task {
+func (m *TaskMgr) AddTask(task Task) Task {
 	/* Adds a new task to in-memory tasks slice.
-	   Sets the CreatedAt property at UTC timestamp.
+	   Sets the CreatedAt property at the current timestamp.
 	   Increments the task manager count.
 	   Args:
-	     name   string  - a name for the new task
+	     task Task - a Task object with necessary params
 
 	   Добавляет новую задачу в слайс задач в памяти.
-	   Устанавливает поле CreatedAt к текущему времени UTC.
+	   Устанавливает поле CreatedAt к текущему времени.
 	   Увеличивает счетчик менеджера задач.
 	   Аргументы:
 	     name   string  - имя новой задачи */
@@ -75,13 +42,14 @@ func (m *TaskMgr) AddTask(name string) Task {
 	defer m.Unlock()
 
 	m.Count++
-	task := Task{
+	aux := Task{
 		ID:        m.Count,
-		Name:      name,
+		Name:      task.Name,
 		CreatedAt: time.Now(),
+		Done:      task.Done,
 	}
-	m.Tasks = append(m.Tasks, task)
-	return task
+	m.Tasks = append(m.Tasks, aux)
+	return aux
 }
 
 func (m *TaskMgr) GetTasks() []Task {
@@ -90,4 +58,23 @@ func (m *TaskMgr) GetTasks() []Task {
 	m.RLock()
 	defer m.RUnlock()
 	return m.Tasks
+}
+
+func (m *TaskMgr) PutTask(data Task) Task {
+	/* A method for PUT request, updating or creating a task.
+	   Метод для PUT запроса, обновление или создание задачи. */
+	m.Lock()
+
+	for i, task := range m.Tasks {
+		if task.ID == data.ID {
+			m.Tasks[i].Name = data.Name
+			m.Tasks[i].Done = data.Done
+			m.Unlock()
+			return m.Tasks[i]
+		}
+	}
+
+	// Task doesn't exist, create new - задачи не существует, создание новой
+	m.Unlock()
+	return m.AddTask(data)
 }

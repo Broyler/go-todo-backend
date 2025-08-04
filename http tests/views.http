@@ -6,8 +6,25 @@ POST localhost:8000/api/tasks/
 Content-Type: application/json
 
 {
-    "name": "Test task!"
+    "name": "Test task!",
+    "done": false
 }
 
 ### GET request on non-existent object
 GET localhost:8000/api/tasks/9999
+
+### PUT request (update or create)
+PUT localhost:8000/api/tasks/
+Content-Type: application/json
+
+{
+  "id": 1,
+  "name": "New test task name!",
+  "done": true
+}
+
+### DELETE request
+DELETE localhost:8000/api/tasks/2
+
+### DELETE request on non-existent ID
+DELETE localhost:8000/api/tasks/9999

@@ -42,6 +42,8 @@ func CheckMethods(w http.ResponseWriter, r *http.Request, m *TaskMgr) {
 		get(w, r, m)
 	case http.MethodPost:
 		post(w, r, m)
+	case http.MethodPut:
+		put(w, r, m)
 	default:
 		methodNotSupported(w, r)
 	}
@@ -53,6 +55,8 @@ func ByID(w http.ResponseWriter, r *http.Request, m *TaskMgr, id int) {
 	switch r.Method {
 	case http.MethodGet:
 		taskGet(w, r, m, id)
+	case http.MethodDelete:
+		_delete(w, m, id)
 	default:
 		methodNotSupported(w, r)
 	}
