@@ -1,5 +1,10 @@
 ### GET request to tasks API root
 GET localhost:8000/api/tasks
 
-### DELETE request to tasks API root
-DELETE localhost:8000/api/tasks
+### POST request creating a test task
+POST localhost:8000/api/tasks
+Content-Type: application/json
+
+{
+    "name": "Test task!"
+}

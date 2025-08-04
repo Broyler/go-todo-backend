@@ -1,37 +1,73 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 )
 
 func tasksGet(w http.ResponseWriter, r *http.Request) {
+	/* GET method for tasks API.
+	   Will return a paginated JSON response with tasks.
+
+	   Метод GET для API задач.
+	   Вернет JSON задач с пагинацией. */
 	_, err := w.Write([]byte("Get method called"))
 	if err != nil {
-		log.Fatal("Error writing http response", err)
+		http.Error(w, "Error writing http response", http.StatusBadRequest)
+		panic(err)
 	}
 }
 
-func tasksDelete(w http.ResponseWriter, r *http.Request) {
-	_, err := w.Write([]byte("Delete method called"))
+func getTaskPostData(w http.ResponseWriter, r *http.Request) (TaskPost, error) {
+	/* A function for getting task data from request body.
+	   Функция для получения данных о задаче из тела запроса. */
+	var data TaskPost
+	err := json.NewDecoder(r.Body).Decode(&data)
 	if err != nil {
-		log.Fatal("Error writing http response", err)
+		http.Error(w, "Error decoding request body JSON", http.StatusBadRequest)
+		return data, err
+	}
+	return data, nil
+}
+
+func tasksPost(w http.ResponseWriter, r *http.Request, mgr *TasksMgr) {
+	/* POST method for tasks API. Will create a new task with a given name.
+	   Accepts a JSON body with "name" param.
+
+	   Метод POST для API задач. Создаст новую задачу с переданным именем.
+	   Принимает тело JSON с параметром "name". */
+	data, err := getTaskPostData(w, r)
+	if err != nil {
+		return
+	}
+	appendTask(mgr, data.Name)
+	w.WriteHeader(http.StatusCreated)
+	_, err = w.Write([]byte("201 Created"))
+	if err != nil {
+		http.Error(w, "Error writing http response", http.StatusBadRequest)
+		panic(err)
 	}
 }
 
 func methodNotSupported(w http.ResponseWriter, r *http.Request) {
+	/* A function to write a response that the method is not supported.
+	   Функция для записи в ответ информации о недоступности метода запроса. */
 	_, err := w.Write([]byte("Method " + r.Method + " is not allowed"))
 	if err != nil {
-		log.Fatal("Error writing http response", err)
+		panic(err)
 	}
 }
 
-func tasksAPI(w http.ResponseWriter, r *http.Request) {
+func tasksAPI(w http.ResponseWriter, r *http.Request, mgr *TasksMgr) {
+	/* A function to switch between request methods for tasks API.
+	   Функция для выбора между методами запросов для API задач. */
 	switch r.Method {
 	case http.MethodGet:
+		log.Printf("Count - %d", len(*(*mgr).Tasks))
 		tasksGet(w, r)
-	case http.MethodDelete:
-		tasksDelete(w, r)
+	case http.MethodPost:
+		tasksPost(w, r, mgr)
 	default:
 		methodNotSupported(w, r)
 	}
