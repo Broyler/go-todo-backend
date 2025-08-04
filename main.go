@@ -3,23 +3,24 @@ package main
 import (
 	"log"
 	"net/http"
+	"todoBackend/tasks"
 )
 
 func main() {
-	tasks := make([]Task, 0)
-	tasksMgr := TasksMgr{
-		Tasks: tasks,
+	data := make([]tasks.Task, 0)
+	tasksMgr := tasks.TaskMgr{
+		Tasks: data,
 		Count: 0,
 	}
-	middleware := Chain(
-		ContentTypeMiddleware("application/json"),
-		MaxBodySizeMiddleware(1<<20),
+	middleware := tasks.Chain(
+		tasks.ContentTypeMiddleware("application/json"),
+		tasks.MaxBodySizeMiddleware(1<<20),
 	)
 	apiMux := http.NewServeMux()   // global mux - глобальный роутер
 	tasksMux := http.NewServeMux() // tasks API mux - роутер API задач
 
-	tasksMux.HandleFunc("/tasks", func(w http.ResponseWriter, r *http.Request) {
-		tasksAPI(w, r, &tasksMgr) // passing a pointer to slice of tasks - передаем ссылку на слайс с задачами
+	tasksMux.HandleFunc("/tasks/", func(w http.ResponseWriter, r *http.Request) {
+		tasks.HandleTasks(w, r, &tasksMgr)
 	})
 	apiMux.Handle("/api/", http.StripPrefix("/api", middleware(tasksMux)))
 

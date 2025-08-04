@@ -1,4 +1,4 @@
-package main
+package tasks
 
 import (
 	"sync"
@@ -24,7 +24,7 @@ type TaskPost struct {
 	Name string `json:"name"`
 }
 
-type TasksMgr struct {
+type TaskMgr struct {
 	// A struct for managing tasks slice and counting IDs.
 	// Структура для управления слайсом задач и счетом ID.
 	Tasks []Task
@@ -59,7 +59,7 @@ func (t *Task) Toggle() {
 	}
 }
 
-func (m *TasksMgr) AddTask(name string) Task {
+func (m *TaskMgr) AddTask(name string) Task {
 	/* Adds a new task to in-memory tasks slice.
 	   Sets the CreatedAt property at UTC timestamp.
 	   Increments the task manager count.
@@ -84,7 +84,7 @@ func (m *TasksMgr) AddTask(name string) Task {
 	return task
 }
 
-func (m *TasksMgr) GetTasks() []Task {
+func (m *TaskMgr) GetTasks() []Task {
 	/* A method for getting tasks from TaskMgr's in-memory storage.
 	   Метод для получения задач из хранилища менеджера задач. */
 	m.RLock()
