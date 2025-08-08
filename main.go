@@ -4,6 +4,8 @@ import (
 	"log"
 	"net/http"
 	"todoBackend/tasks"
+
+	_ "github.com/lib/pq"
 )
 
 func main() {
